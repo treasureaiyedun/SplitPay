@@ -88,69 +88,69 @@ const SplitPay: React.FC = () => {
     }
   };
 
-useEffect(() => {
-  const fetchCurrencies = async () => {
+  useEffect(() => {
+    const fetchCurrencies = async () => {
       console.log("Fetching currency codes...");
-    try {
-      const response = await fetch(
-        `https://v6.exchangerate-api.com/v6/${process.env.NEXT_PUBLIC_EXCHANGE_API_KEY}/codes`
-      );
-      const data = await response.json();
-      console.log("Currency data:", data);
-      if (data.result === "success" && Array.isArray(data.supported_codes)) {
-        const mappedCurrencies: Currency[] = data.supported_codes.map(
-          ([code, name]: [string, string]) => ({
-            code,
-            name,
-            symbol: getCurrencySymbolFallback(code),
-          })
+      try {
+        const response = await fetch(
+          `https://v6.exchangerate-api.com/v6/${process.env.NEXT_PUBLIC_EXCHANGE_API_KEY}/codes`
         );
-        setCurrencies(mappedCurrencies);
-      } else {
-        throw new Error("Invalid currency data");
+        const data = await response.json();
+        console.log("Currency data:", data);
+        if (data.result === "success" && Array.isArray(data.supported_codes)) {
+          const mappedCurrencies: Currency[] = data.supported_codes.map(
+            ([code, name]: [string, string]) => ({
+              code,
+              name,
+              symbol: getCurrencySymbolFallback(code),
+            })
+          );
+          setCurrencies(mappedCurrencies);
+        } else {
+          throw new Error("Invalid currency data");
+        }
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.error("Failed to fetch currencies:", err.message);
+        } else {
+          console.error("An unknown error occurred.");
+        }
       }
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        console.error("Failed to fetch currencies:", err.message);
-      } else {
-        console.error("An unknown error occurred.");
+    };
+
+    fetchCurrencies();
+  }, []);
+
+  useEffect(() => {
+    const fetchExchangeRates = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const response = await fetch(
+          `https://v6.exchangerate-api.com/v6/${process.env.NEXT_PUBLIC_EXCHANGE_API_KEY}/latest/${baseCurrency}`
+        );
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        setExchangeRates(data.conversion_rates);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.error("Failed to fetch exchange rates:", err.message);
+          setError("Failed to fetch exchange rates. Please try again.");
+        } else {
+          setError("An unknown error occurred.");
+        }
+      } finally {
+        setLoading(false);
       }
-    }
-  };
+    };
 
-  fetchCurrencies();
-}, []);
-
-useEffect(() => {
-  const fetchExchangeRates = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const response = await fetch(
-        `https://v6.exchangerate-api.com/v6/${process.env.NEXT_PUBLIC_EXCHANGE_API_KEY}/latest/${baseCurrency}`
-      );
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      setExchangeRates(data.conversion_rates);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        console.error("Failed to fetch exchange rates:", err.message);
-        setError("Failed to fetch exchange rates. Please try again.");
-      } else {
-        setError("An unknown error occurred.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchExchangeRates();
-}, [baseCurrency]);
+    fetchExchangeRates();
+  }, [baseCurrency]);
 
 
   const addPerson = () => {
@@ -264,115 +264,118 @@ useEffect(() => {
 
         <div className="grid lg:grid-cols-2 gap-8">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-xs md:max-w-lg">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <DollarSign className="w-5 h-5" />
-              Bill Details
-            </h2>
+            <div className="mx-5">
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <DollarSign className="w-5 h-5" />
+                Bill Details
+              </h2>
 
-            <div className="mb-4 mx-10 md:mx-0">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Total Amount</label>
-              <div className="flex flex-col md:flex-row gap-2">
-                <select
-                  value={baseCurrency}
-                  onChange={(e) => setBaseCurrency(e.target.value)}
-                  className="md:max-w-[15rem] max-w-xs py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  {currencies.map(currency => (
-                    <option key={currency.code} value={currency.code}>
-                      {currency.code} - {currency.name}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  value={totalAmount}
-                  onChange={(e) => setTotalAmount(e.target.value)}
-                  onKeyDown={handleTotalAmountKeyDown}
-                  placeholder="Enter total amount"
-                  className="md:max-w-[10rem] max-w-xs py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 px-2"
-                />
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <label className="block text-sm font-medium text-gray-700">People ({people.length})</label>
-                <button
-                  onClick={addPerson}
-                  className="flex items-center gap-1 px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm mb-1"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Person
-                </button>
-              </div>
-
-              {people.map((person, index) => (
-                <div key={person.id} className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    ref={(el) => {
-                      if (el) nameRefs.current[index] = el;
-                    }}
-                    value={person.name}
-                    onChange={(e) => updatePerson(person.id, 'name', e.target.value)}
-                    onKeyDown={(e) => handleNameKeyDown(e, index)}
-                    placeholder={`Person ${index + 1} name`}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Total Amount</label>
+                <div className="flex flex-col md:flex-row gap-2">
                   <select
-                    ref={(el) => {
-                      if (el) currencyRefs.current[index] = el;
-                    }}
-                    value={person.currency}
-                    onChange={(e) => updatePerson(person.id, 'currency', e.target.value)}
-                    onKeyDown={(e) => handleCurrencyKeyDown(e, index)}
-                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    value={baseCurrency}
+                    onChange={(e) => setBaseCurrency(e.target.value)}
+                    className="md:max-w-[15rem] max-w-xs py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     {currencies.map(currency => (
                       <option key={currency.code} value={currency.code}>
-                        {currency.code}
+                        {currency.code} - {currency.name}
                       </option>
                     ))}
                   </select>
-                  {people.length > 1 && (
-                    <button
-                      onClick={() => removePerson(person.id)}
-                      className="px-2 py-2 text-red-600 hover:bg-red-50 rounded-md"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                  )}
+                  <input
+                    value={totalAmount}
+                    onChange={(e) => setTotalAmount(e.target.value)}
+                    onKeyDown={handleTotalAmountKeyDown}
+                    placeholder="Enter total amount"
+                    className="md:max-w-[10rem] max-w-xs py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 px-2"
+                  />
                 </div>
-              ))}
-            </div>
-
-            <div className="mb-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                <span>Exchange rates: {loading ? 'Loading...' : 'Ready'}</span>
-                <button
-                  onClick={fetchExchangeRates}
-                  disabled={loading}
-                  className="text-indigo-600 hover:text-indigo-800 underline"
-                >
-                  Refresh
-                </button>
               </div>
-            </div>
 
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700">
-                {error}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-medium text-gray-700">People ({people.length})</label>
+                  <button
+                    onClick={addPerson}
+                    className="flex items-center gap-1 px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm mb-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Person
+                  </button>
+                </div>
+
+                {people.map((person, index) => (
+                  <div key={person.id} className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      ref={(el) => {
+                        if (el) nameRefs.current[index] = el;
+                      }}
+                      value={person.name}
+                      onChange={(e) => updatePerson(person.id, 'name', e.target.value)}
+                      onKeyDown={(e) => handleNameKeyDown(e, index)}
+                      placeholder={`Person ${index + 1} name`}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <select
+                      ref={(el) => {
+                        if (el) currencyRefs.current[index] = el;
+                      }}
+                      value={person.currency}
+                      onChange={(e) => updatePerson(person.id, 'currency', e.target.value)}
+                      onKeyDown={(e) => handleCurrencyKeyDown(e, index)}
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      {currencies.map(currency => (
+                        <option key={currency.code} value={currency.code}>
+                          {currency.code}
+                        </option>
+                      ))}
+                    </select>
+                    {people.length > 1 && (
+                      <button
+                        onClick={() => removePerson(person.id)}
+                        className="px-2 py-2 text-red-600 hover:bg-red-50 rounded-md"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
-            )}
 
-            <button
-              onClick={calculateSplit}
-              disabled={loading}
-              className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-            >
-              Calculate Split
-            </button>
+              <div className="mb-4">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                  <span>Exchange rates: {loading ? 'Loading...' : 'Ready'}</span>
+                  <button
+                    onClick={fetchExchangeRates}
+                    disabled={loading}
+                    className="text-indigo-600 hover:text-indigo-800 underline"
+                  >
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700">
+                  {error}
+                </div>
+              )}
+
+              <button
+                onClick={calculateSplit}
+                disabled={loading}
+                className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                Calculate Split
+              </button>
+            </div>
           </div>
+
 
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
