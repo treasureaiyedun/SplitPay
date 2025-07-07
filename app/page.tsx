@@ -28,7 +28,7 @@ interface SplitResult {
   people: ResultPerson[];
 }
 
-const CurrencySplit: React.FC = () => {
+const SplitPay: React.FC = () => {
   const [totalAmount, setTotalAmount] = useState<string>('');
   const [baseCurrency, setBaseCurrency] = useState<string>('USD');
   const [people, setPeople] = useState<Person[]>([
@@ -213,7 +213,7 @@ const CurrencySplit: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
@@ -394,4 +394,4 @@ const CurrencySplit: React.FC = () => {
   );
 };
 
-export default CurrencySplit;
+export default SplitPay;
