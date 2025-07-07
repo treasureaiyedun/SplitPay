@@ -263,7 +263,7 @@ const SplitPay: React.FC = () => {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-xs md:max-w-lg">
+          <div className="bg-white rounded-lg shadow-lg p-6">
             <div className="mx-5">
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <DollarSign className="w-5 h-5" />
@@ -317,7 +317,7 @@ const SplitPay: React.FC = () => {
                       onChange={(e) => updatePerson(person.id, 'name', e.target.value)}
                       onKeyDown={(e) => handleNameKeyDown(e, index)}
                       placeholder={`Person ${index + 1} name`}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-max md:max-w-full"
                     />
                     <select
                       ref={(el) => {
