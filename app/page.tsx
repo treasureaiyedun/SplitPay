@@ -253,7 +253,7 @@ const SplitPay: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-5xl mx-auto w-full">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Calculator className="w-8 h-8 text-indigo-600" />
@@ -262,9 +262,9 @@ const SplitPay: React.FC = () => {
           <p className="text-gray-600">Split bills fairly across different currencies</p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="mx-5">
+        <div className="flex flex-col lg:flex-row justify-between space-y-8 lg:space-y-0 md:mx-20 lg:mx-10">
+          <div className="bg-white rounded-lg shadow-lg p-6 ">
+            <div>
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <DollarSign className="w-5 h-5" />
                 Bill Details
@@ -317,7 +317,7 @@ const SplitPay: React.FC = () => {
                       onChange={(e) => updatePerson(person.id, 'name', e.target.value)}
                       onKeyDown={(e) => handleNameKeyDown(e, index)}
                       placeholder={`Person ${index + 1} name`}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-max md:max-w-full"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 w-1/2 md:w-full"
                     />
                     <select
                       ref={(el) => {
