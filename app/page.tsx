@@ -1,15 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import {
-  Calculator,
-  Users,
-  DollarSign,
-  Copy,
-  Share2,
-  Plus,
-  Minus,
-  RefreshCw
-} from 'lucide-react';
+import { Calculator, Users, DollarSign, Copy, Share2, Plus, Minus, RefreshCw } from 'lucide-react';
 
 interface Person {
   id: number;
@@ -73,11 +64,11 @@ const CurrencySplit: React.FC = () => {
     setError('');
 
     try {
-      const response = await fetch(`https://v6.exchangerate-api.com/v6/${process.env.NEXT_PUBLIC_EXCHANGE_API_KEY}/latest/${baseCurrency}`);
+      const response = await fetch(`https://v6.exchangerate-api.com/v6/${process.env.NEXT_PUBLIC_EXCHANGE_API_KEY}/latest/USD`);
       const data = await response.json();
 
-      if (data.result !== 'success') {
-        throw new Error('API error');
+      if (data.error) {
+        throw new Error(data.error);
       }
 
       setExchangeRates(data.conversion_rates);
@@ -86,8 +77,6 @@ const CurrencySplit: React.FC = () => {
     } finally {
       setLoading(false);
     }
-   console.log('API Key:', process.env.NEXT_PUBLIC_EXCHANGE_API_KEY);
-
   };
 
   useEffect(() => {
@@ -203,7 +192,7 @@ const CurrencySplit: React.FC = () => {
                 <select
                   value={baseCurrency}
                   onChange={(e) => setBaseCurrency(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {currencies.map(currency => (
                     <option key={currency.code} value={currency.code}>
@@ -216,7 +205,7 @@ const CurrencySplit: React.FC = () => {
                   value={totalAmount}
                   onChange={(e) => setTotalAmount(e.target.value)}
                   placeholder="Enter total amount"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="max-w-max py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
