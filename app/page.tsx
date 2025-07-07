@@ -90,12 +90,13 @@ const SplitPay: React.FC = () => {
 
 useEffect(() => {
   const fetchCurrencies = async () => {
+      console.log("Fetching currency codes...");
     try {
       const response = await fetch(
         `https://v6.exchangerate-api.com/v6/${process.env.NEXT_PUBLIC_EXCHANGE_API_KEY}/codes`
       );
       const data = await response.json();
-
+      console.log("Currency data:", data);
       if (data.result === "success" && Array.isArray(data.supported_codes)) {
         const mappedCurrencies: Currency[] = data.supported_codes.map(
           ([code, name]: [string, string]) => ({
@@ -261,8 +262,8 @@ useEffect(() => {
           <p className="text-gray-600">Split bills fairly across different currencies</p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="grid lg:grid-cols-2 gap-8 md:mx-0 mx-20">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <DollarSign className="w-5 h-5" />
               Bill Details
@@ -270,11 +271,11 @@ useEffect(() => {
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Total Amount</label>
-              <div className="flex gap-2">
+              <div className="flex flex-col md:flex-row gap-2">
                 <select
                   value={baseCurrency}
                   onChange={(e) => setBaseCurrency(e.target.value)}
-                  className="max-w-[15rem] py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="md:max-w-[15rem] max-w-xs py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {currencies.map(currency => (
                     <option key={currency.code} value={currency.code}>
@@ -287,7 +288,7 @@ useEffect(() => {
                   onChange={(e) => setTotalAmount(e.target.value)}
                   onKeyDown={handleTotalAmountKeyDown}
                   placeholder="Enter total amount"
-                  className="max-w-max py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 px-2"
+                  className="md:max-w-[10rem] max-w-xs py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 px-2"
                 />
               </div>
             </div>
