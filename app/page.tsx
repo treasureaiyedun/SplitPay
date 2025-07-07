@@ -262,7 +262,7 @@ useEffect(() => {
           <p className="text-gray-600">Split bills fairly across different currencies</p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 md:mx-0 mx-20">
+        <div className="grid lg:grid-cols-2 gap-8">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-md">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <DollarSign className="w-5 h-5" />
