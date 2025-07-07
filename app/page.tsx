@@ -263,7 +263,7 @@ useEffect(() => {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <DollarSign className="w-5 h-5" />
               Bill Details
