@@ -66,26 +66,6 @@ const SplitPay: React.FC = () => {
     return currency ? currency.symbol : getCurrencySymbolFallback(code);
   };
 
-  const fetchCurrencies = async () => {
-    try {
-      const response = await fetch(`https://v6.exchangerate-api.com/v6/${process.env.NEXT_PUBLIC_EXCHANGE_API_KEY}/codes`);
-      const data = await response.json();
-
-      if (data.result === "success" && Array.isArray(data.supported_codes)) {
-        const mappedCurrencies: Currency[] = data.supported_codes.map(([code, name]: [string, string]) => ({
-          code,
-          name,
-          symbol: getCurrencySymbolFallback(code)
-        }));
-        setCurrencies(mappedCurrencies);
-      } else {
-        throw new Error('Invalid currency data');
-      }
-    } catch (err) {
-      console.error('Failed to fetch currencies:', err);
-    }
-  };
-
   const fetchExchangeRates = async () => {
     setLoading(true);
     setError('');
@@ -99,20 +79,78 @@ const SplitPay: React.FC = () => {
       }
 
       setExchangeRates(data.conversion_rates);
-    } catch (err) {
-      setError('Failed to fetch exchange rates. Please try again.');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("Failed to fetch currencies:", err.message);
+      } else {
+        console.error("An unknown error occurred.");
+      }
+    }
+  };
+
+useEffect(() => {
+  const fetchCurrencies = async () => {
+    try {
+      const response = await fetch(
+        `https://v6.exchangerate-api.com/v6/${process.env.NEXT_PUBLIC_EXCHANGE_API_KEY}/codes`
+      );
+      const data = await response.json();
+
+      if (data.result === "success" && Array.isArray(data.supported_codes)) {
+        const mappedCurrencies: Currency[] = data.supported_codes.map(
+          ([code, name]: [string, string]) => ({
+            code,
+            name,
+            symbol: getCurrencySymbolFallback(code),
+          })
+        );
+        setCurrencies(mappedCurrencies);
+      } else {
+        throw new Error("Invalid currency data");
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("Failed to fetch currencies:", err.message);
+      } else {
+        console.error("An unknown error occurred.");
+      }
+    }
+  };
+
+  fetchCurrencies();
+}, []);
+
+useEffect(() => {
+  const fetchExchangeRates = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        `https://v6.exchangerate-api.com/v6/${process.env.NEXT_PUBLIC_EXCHANGE_API_KEY}/latest/${baseCurrency}`
+      );
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setExchangeRates(data.conversion_rates);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("Failed to fetch exchange rates:", err.message);
+        setError("Failed to fetch exchange rates. Please try again.");
+      } else {
+        setError("An unknown error occurred.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchCurrencies();
-  }, []);
+  fetchExchangeRates();
+}, [baseCurrency]);
 
-  useEffect(() => {
-    fetchExchangeRates();
-  }, [baseCurrency]);
 
   const addPerson = () => {
     const newId = Math.max(...people.map(p => p.id)) + 1;
@@ -384,7 +422,7 @@ const SplitPay: React.FC = () => {
             ) : (
               <div className="text-center text-gray-500 py-8">
                 <Calculator className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p>Enter bill details and click "Calculate Split" to see results</p>
+                <p>Enter bill details and click {'"Calculate Split"'} to see results</p>
               </div>
             )}
           </div>
