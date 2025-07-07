@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Calculator, Users, DollarSign, Copy, Share2, Plus, Minus, RefreshCw } from 'lucide-react';
 
 interface Person {
@@ -36,27 +36,54 @@ const CurrencySplit: React.FC = () => {
     { id: 2, name: '', currency: 'USD' },
     { id: 3, name: '', currency: 'GBP' }
   ]);
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [results, setResults] = useState<SplitResult | null>(null);
   const [error, setError] = useState<string>('');
 
-  const currencies: Currency[] = [
-    { code: 'USD', name: 'US Dollar', symbol: '$' },
-    { code: 'EUR', name: 'Euro', symbol: '€' },
-    { code: 'GBP', name: 'British Pound', symbol: '£' },
-    { code: 'NGN', name: 'Nigerian Naira', symbol: '₦' },
-    { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
-    { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
-    { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
-    { code: 'CNY', name: 'Chinese Yuan', symbol: '¥' },
-    { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
-    { code: 'ZAR', name: 'South African Rand', symbol: 'R' }
-  ];
+  const nameRefs = useRef<HTMLInputElement[]>([]);
+  const currencyRefs = useRef<HTMLSelectElement[]>([]);
+
+  const getCurrencySymbolFallback = (code: string): string => {
+    const symbols: Record<string, string> = {
+      USD: '$',
+      EUR: '€',
+      GBP: '£',
+      NGN: '₦',
+      CAD: 'C$',
+      AUD: 'A$',
+      JPY: '¥',
+      CNY: '¥',
+      INR: '₹',
+      ZAR: 'R'
+    };
+    return symbols[code] || code;
+  };
 
   const getCurrencySymbol = (code: string): string => {
     const currency = currencies.find(c => c.code === code);
-    return currency ? currency.symbol : code;
+    return currency ? currency.symbol : getCurrencySymbolFallback(code);
+  };
+
+  const fetchCurrencies = async () => {
+    try {
+      const response = await fetch(`https://v6.exchangerate-api.com/v6/${process.env.NEXT_PUBLIC_EXCHANGE_API_KEY}/codes`);
+      const data = await response.json();
+
+      if (data.result === "success" && Array.isArray(data.supported_codes)) {
+        const mappedCurrencies: Currency[] = data.supported_codes.map(([code, name]: [string, string]) => ({
+          code,
+          name,
+          symbol: getCurrencySymbolFallback(code)
+        }));
+        setCurrencies(mappedCurrencies);
+      } else {
+        throw new Error('Invalid currency data');
+      }
+    } catch (err) {
+      console.error('Failed to fetch currencies:', err);
+    }
   };
 
   const fetchExchangeRates = async () => {
@@ -64,7 +91,7 @@ const CurrencySplit: React.FC = () => {
     setError('');
 
     try {
-      const response = await fetch(`https://v6.exchangerate-api.com/v6/${process.env.NEXT_PUBLIC_EXCHANGE_API_KEY}/latest/USD`);
+      const response = await fetch(`https://v6.exchangerate-api.com/v6/${process.env.NEXT_PUBLIC_EXCHANGE_API_KEY}/latest/${baseCurrency}`);
       const data = await response.json();
 
       if (data.error) {
@@ -78,6 +105,10 @@ const CurrencySplit: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchCurrencies();
+  }, []);
 
   useEffect(() => {
     fetchExchangeRates();
@@ -144,7 +175,6 @@ const CurrencySplit: React.FC = () => {
     if (!results) return;
 
     const text = `Bill Split Results:\nTotal: ${getCurrencySymbol(baseCurrency)}${results.totalAmount}\nSplit ${results.people.length} ways:\n\n${results.people.map(p => `${p.name}: ${p.symbol}${p.amount.toFixed(2)}`).join('\n')}`;
-
     navigator.clipboard.writeText(text);
   };
 
@@ -154,19 +184,37 @@ const CurrencySplit: React.FC = () => {
     const text = `Bill Split Results:\nTotal: ${getCurrencySymbol(baseCurrency)}${results.totalAmount}\nSplit ${results.people.length} ways:\n\n${results.people.map(p => `${p.name}: ${p.symbol}${p.amount.toFixed(2)}`).join('\n')}`;
 
     if (navigator.share) {
-      navigator.share({
-        title: 'Bill Split Results',
-        text: text
-      });
+      navigator.share({ title: 'Bill Split Results', text });
     } else {
       copyResults();
     }
   };
 
+  const handleTotalAmountKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      nameRefs.current[0]?.focus();
+    }
+  };
+
+  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === 'Enter') {
+      currencyRefs.current[index]?.focus();
+    }
+  };
+
+  const handleCurrencyKeyDown = (e: React.KeyboardEvent<HTMLSelectElement>, index: number) => {
+    if (e.key === 'Enter') {
+      if (index + 1 < people.length) {
+        nameRefs.current[index + 1]?.focus();
+      } else {
+        calculateSplit();
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
+      <div className="max-w-5xl mx-auto">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Calculator className="w-8 h-8 text-indigo-600" />
@@ -176,23 +224,19 @@ const CurrencySplit: React.FC = () => {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Input Section */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <DollarSign className="w-5 h-5" />
               Bill Details
             </h2>
 
-            {/* Total Amount */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Total Amount
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Total Amount</label>
               <div className="flex gap-2">
                 <select
                   value={baseCurrency}
                   onChange={(e) => setBaseCurrency(e.target.value)}
-                  className="px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="max-w-[15rem] py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {currencies.map(currency => (
                     <option key={currency.code} value={currency.code}>
@@ -201,24 +245,21 @@ const CurrencySplit: React.FC = () => {
                   ))}
                 </select>
                 <input
-                  type="number"
                   value={totalAmount}
                   onChange={(e) => setTotalAmount(e.target.value)}
+                  onKeyDown={handleTotalAmountKeyDown}
                   placeholder="Enter total amount"
-                  className="max-w-max py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="max-w-max py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 px-2"
                 />
               </div>
             </div>
 
-            {/* People Section */}
             <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  People ({people.length})
-                </label>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-medium text-gray-700">People ({people.length})</label>
                 <button
                   onClick={addPerson}
-                  className="flex items-center gap-1 px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
+                  className="flex items-center gap-1 px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm mb-1"
                 >
                   <Plus className="w-4 h-4" />
                   Add Person
@@ -229,14 +270,22 @@ const CurrencySplit: React.FC = () => {
                 <div key={person.id} className="flex gap-2 mb-2">
                   <input
                     type="text"
+                    ref={(el) => {
+                      if (el) nameRefs.current[index] = el;
+                    }}
                     value={person.name}
                     onChange={(e) => updatePerson(person.id, 'name', e.target.value)}
+                    onKeyDown={(e) => handleNameKeyDown(e, index)}
                     placeholder={`Person ${index + 1} name`}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                   <select
+                    ref={(el) => {
+                      if (el) currencyRefs.current[index] = el;
+                    }}
                     value={person.currency}
                     onChange={(e) => updatePerson(person.id, 'currency', e.target.value)}
+                    onKeyDown={(e) => handleCurrencyKeyDown(e, index)}
                     className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     {currencies.map(currency => (
@@ -257,7 +306,6 @@ const CurrencySplit: React.FC = () => {
               ))}
             </div>
 
-            {/* Exchange Rate Status */}
             <div className="mb-4">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -272,14 +320,12 @@ const CurrencySplit: React.FC = () => {
               </div>
             </div>
 
-            {/* Error Message */}
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700">
                 {error}
               </div>
             )}
 
-            {/* Calculate Button */}
             <button
               onClick={calculateSplit}
               disabled={loading}
@@ -289,7 +335,6 @@ const CurrencySplit: React.FC = () => {
             </button>
           </div>
 
-          {/* Results Section */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <Users className="w-5 h-5" />
@@ -343,11 +388,6 @@ const CurrencySplit: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center mt-8 text-gray-500 text-sm">
-          <p>Exchange rates are for demonstration purposes. In production, use a real API like ExchangeRate-API or Open Exchange Rates.</p>
         </div>
       </div>
     </div>
