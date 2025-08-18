@@ -435,7 +435,7 @@ const SplitPay: React.FC = () => {
             ) : (
               <div className="text-center text-gray-500 py-8 sm:py-12">
                 <Calculator className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 text-gray-300" />
-                <p className="text-sm sm:text-base px-4">Enter bill details and click "Calculate Split" to see results</p>
+                <p className="text-sm sm:text-base px-4">Enter bill details and click {'"Calculate Split"'} to see results</p>
               </div>
             )}
           </div>
