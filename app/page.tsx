@@ -71,44 +71,49 @@ const SplitPay: React.FC = () => {
     setError('');
 
     try {
-      const response = await fetch(`https://v6.exchangerate-api.com/v6/${process.env.NEXT_PUBLIC_EXCHANGE_API_KEY}/latest/${baseCurrency}`);
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      setExchangeRates(data.conversion_rates);
+      // Mock exchange rates for demo purposes
+      const mockRates = {
+        USD: 1,
+        NGN: 1640,
+        GBP: 0.79,
+        EUR: 0.92,
+        CAD: 1.37,
+        AUD: 1.53,
+        JPY: 149,
+        CNY: 7.24,
+        INR: 83.12,
+        ZAR: 18.65
+      };
+      
+      setExchangeRates(mockRates);
     } catch (err: unknown) {
       if (err instanceof Error) {
         console.error("Failed to fetch currencies:", err.message);
       } else {
         console.error("An unknown error occurred.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     const fetchCurrencies = async () => {
-      console.log("Fetching currency codes...");
       try {
-        const response = await fetch(
-          `https://v6.exchangerate-api.com/v6/${process.env.NEXT_PUBLIC_EXCHANGE_API_KEY}/codes`
-        );
-        const data = await response.json();
-        console.log("Currency data:", data);
-        if (data.result === "success" && Array.isArray(data.supported_codes)) {
-          const mappedCurrencies: Currency[] = data.supported_codes.map(
-            ([code, name]: [string, string]) => ({
-              code,
-              name,
-              symbol: getCurrencySymbolFallback(code),
-            })
-          );
-          setCurrencies(mappedCurrencies);
-        } else {
-          throw new Error("Invalid currency data");
-        }
+        // Mock currency data for demo
+        const mockCurrencies: Currency[] = [
+          { code: 'USD', name: 'US Dollar', symbol: '$' },
+          { code: 'NGN', name: 'Nigerian Naira', symbol: '₦' },
+          { code: 'GBP', name: 'British Pound', symbol: '£' },
+          { code: 'EUR', name: 'Euro', symbol: '€' },
+          { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
+          { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
+          { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
+          { code: 'CNY', name: 'Chinese Yuan', symbol: '¥' },
+          { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
+          { code: 'ZAR', name: 'South African Rand', symbol: 'R' }
+        ];
+        setCurrencies(mockCurrencies);
       } catch (err: unknown) {
         if (err instanceof Error) {
           console.error("Failed to fetch currencies:", err.message);
@@ -122,36 +127,8 @@ const SplitPay: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const fetchExchangeRates = async () => {
-      setLoading(true);
-      setError("");
-
-      try {
-        const response = await fetch(
-          `https://v6.exchangerate-api.com/v6/${process.env.NEXT_PUBLIC_EXCHANGE_API_KEY}/latest/${baseCurrency}`
-        );
-        const data = await response.json();
-
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        setExchangeRates(data.conversion_rates);
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          console.error("Failed to fetch exchange rates:", err.message);
-          setError("Failed to fetch exchange rates. Please try again.");
-        } else {
-          setError("An unknown error occurred.");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchExchangeRates();
   }, [baseCurrency]);
-
 
   const addPerson = () => {
     const newId = Math.max(...people.map(p => p.id)) + 1;
@@ -252,181 +229,213 @@ const SplitPay: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
-      <div className="max-w-5xl mx-auto w-full">
-        <div className="text-center mb-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-20 lg:p-6">
+      <div className="max-w-sm md:max-w-4xl mx-auto w-full">
+        {/* Header */}
+        <div className="text-center mb-6 sm:mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <Calculator className="w-8 h-8 text-indigo-600" />
-            <h1 className="text-3xl font-bold text-gray-800">SplitPay</h1>
+            <Calculator className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600" />
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800">SplitPay</h1>
           </div>
-          <p className="text-gray-600">Split bills fairly across different currencies</p>
+          <p className="text-sm sm:text-base text-gray-600">Split bills fairly across different currencies</p>
         </div>
 
-        <div className="flex flex-col lg:flex-row justify-between space-y-8 lg:space-y-0 md:mx-20 lg:mx-10">
-          <div className="bg-white rounded-lg shadow-lg p-6 ">
-            <div>
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <DollarSign className="w-5 h-5" />
-                Bill Details
-              </h2>
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+          
+          {/* Bill Details Panel */}
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 flex items-center gap-2">
+              <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
+              Bill Details
+            </h2>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Total Amount</label>
-                <div className="flex flex-col md:flex-row gap-2">
-                  <select
-                    value={baseCurrency}
-                    onChange={(e) => setBaseCurrency(e.target.value)}
-                    className="md:max-w-[15rem] max-w-xs py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    {currencies.map(currency => (
-                      <option key={currency.code} value={currency.code}>
-                        {currency.code} - {currency.name}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    value={totalAmount}
-                    onChange={(e) => setTotalAmount(e.target.value)}
-                    onKeyDown={handleTotalAmountKeyDown}
-                    placeholder="Enter total amount"
-                    className="md:max-w-[10rem] max-w-xs py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 px-2"
-                  />
-                </div>
+            {/* Total Amount Section */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">Total Amount</label>
+              <div className="flex flex-row lg:flex-col gap-3">
+                <select
+                  value={baseCurrency}
+                  onChange={(e) => setBaseCurrency(e.target.value)}
+                  className="w-full lg:w-auto lg:min-w-[200px] px-3 py-2.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  {currencies.map(currency => (
+                    <option key={currency.code} value={currency.code}>
+                      {currency.code} - {currency.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  value={totalAmount}
+                  onChange={(e) => setTotalAmount(e.target.value)}
+                  onKeyDown={handleTotalAmountKeyDown}
+                  placeholder="Enter total amount"
+                  className="w-full lg:flex-1 px-3 py-2.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+            </div>
+
+            {/* People Section */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <label className="block text-sm font-medium text-gray-700">
+                  People ({people.length})
+                </label>
+                <button
+                  onClick={addPerson}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm transition-colors"
+                >
+                  <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Add Person</span>
+                  <span className="xs:hidden">Add</span>
+                </button>
               </div>
 
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <label className="block text-sm font-medium text-gray-700">People ({people.length})</label>
-                  <button
-                    onClick={addPerson}
-                    className="flex items-center gap-1 px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm mb-1"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Person
-                  </button>
-                </div>
-
+              <div className="space-y-3">
                 {people.map((person, index) => (
-                  <div key={person.id} className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      ref={(el) => {
-                        if (el) nameRefs.current[index] = el;
-                      }}
-                      value={person.name}
-                      onChange={(e) => updatePerson(person.id, 'name', e.target.value)}
-                      onKeyDown={(e) => handleNameKeyDown(e, index)}
-                      placeholder={`Person ${index + 1} name`}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 w-1/2 md:w-full"
-                    />
-                    <select
-                      ref={(el) => {
-                        if (el) currencyRefs.current[index] = el;
-                      }}
-                      value={person.currency}
-                      onChange={(e) => updatePerson(person.id, 'currency', e.target.value)}
-                      onKeyDown={(e) => handleCurrencyKeyDown(e, index)}
-                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      {currencies.map(currency => (
-                        <option key={currency.code} value={currency.code}>
-                          {currency.code}
-                        </option>
-                      ))}
-                    </select>
-                    {people.length > 1 && (
-                      <button
-                        onClick={() => removePerson(person.id)}
-                        className="px-2 py-2 text-red-600 hover:bg-red-50 rounded-md"
+                  <div key={person.id} className="flex gap-2 lg:gap-3 p-3 bg-gray-50 rounded-lg">
+                    {/* Name Input */}
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        ref={(el) => {
+                          if (el) nameRefs.current[index] = el;
+                        }}
+                        value={person.name}
+                        onChange={(e) => updatePerson(person.id, 'name', e.target.value)}
+                        onKeyDown={(e) => handleNameKeyDown(e, index)}
+                        placeholder={`Person ${index + 1} name`}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                    </div>
+                    
+                    {/* Currency and Remove Button Row */}
+                    <div className="flex gap-2">
+                      <select
+                        ref={(el) => {
+                          if (el) currencyRefs.current[index] = el;
+                        }}
+                        value={person.currency}
+                        onChange={(e) => updatePerson(person.id, 'currency', e.target.value)}
+                        onKeyDown={(e) => handleCurrencyKeyDown(e, index)}
+                        className="flex-1 lg:w-24 px-2 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                    )}
+                        {currencies.map(currency => (
+                          <option key={currency.code} value={currency.code}>
+                            {currency.code}
+                          </option>
+                        ))}
+                      </select>
+                      {people.length > 1 && (
+                        <button
+                          onClick={() => removePerson(person.id)}
+                          className="px-2 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors flex-shrink-0"
+                          aria-label={`Remove ${person.name || `Person ${index + 1}`}`}
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
-
-              <div className="mb-4">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                  <span>Exchange rates: {loading ? 'Loading...' : 'Ready'}</span>
-                  <button
-                    onClick={fetchExchangeRates}
-                    disabled={loading}
-                    className="text-indigo-600 hover:text-indigo-800 underline"
-                  >
-                    Refresh
-                  </button>
-                </div>
-              </div>
-
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700">
-                  {error}
-                </div>
-              )}
-
-              <button
-                onClick={calculateSplit}
-                disabled={loading}
-                className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-              >
-                Calculate Split
-              </button>
             </div>
+
+            {/* Exchange Rate Status */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between gap-2 text-xs sm:text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
+                <div className="flex items-center gap-2">
+                  <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${loading ? 'animate-spin' : ''}`} />
+                  <span>Exchange rates: {loading ? 'Loading...' : 'Ready'}</span>
+                </div>
+                <button
+                  onClick={fetchExchangeRates}
+                  disabled={loading}
+                  className="text-indigo-600 hover:text-indigo-800 underline text-xs sm:text-sm"
+                >
+                  Refresh
+                </button>
+              </div>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+
+            {/* Calculate Button */}
+            <button
+              onClick={calculateSplit}
+              disabled={loading}
+              className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm sm:text-base transition-colors"
+            >
+              Calculate Split
+            </button>
           </div>
 
-
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5" />
+          {/* Results Panel */}
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 flex items-center gap-2">
+              <Users className="w-4 h-4 sm:w-5 sm:h-5" />
               Split Results
             </h2>
 
             {results ? (
-              <div>
-                <div className="mb-4 p-4 bg-gray-50 rounded-md">
-                  <div className="text-sm text-gray-600">Total Bill</div>
-                  <div className="text-2xl font-bold text-gray-800">
-                    {getCurrencySymbol(results.baseCurrency)}{results.totalAmount}
+              <div className="space-y-4 sm:space-y-6">
+                {/* Total Summary */}
+                <div className="p-4 bg-gradient-to-r from-gray-50 to-indigo-50 rounded-lg border border-gray-100">
+                  <div className="text-xs sm:text-sm text-gray-600 mb-1">Total Bill</div>
+                  <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 mb-2">
+                    {getCurrencySymbol(results.baseCurrency)}{results.totalAmount.toLocaleString()}
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">
+                  <div className="text-xs sm:text-sm text-gray-600">
                     Split {results.people.length} ways = {getCurrencySymbol(results.baseCurrency)}{results.amountPerPerson.toFixed(2)} each
                   </div>
                 </div>
 
-                <div className="space-y-3 mb-4">
+                {/* Individual Results */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Amount per person:</h3>
                   {results.people.map((person, index) => (
-                    <div key={index} className="flex justify-between items-center p-3 bg-indigo-50 rounded-md">
-                      <div className="font-medium text-gray-800">{person.name}</div>
-                      <div className="text-lg font-bold text-indigo-600">
-                        {person.symbol}{person.amount.toFixed(2)}
+                    <div key={index} className="flex justify-between items-center p-3 sm:p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+                      <div className="flex flex-row lg:flex-col lg:items-center gap-1 lg:gap-2">
+                        <span className="font-medium text-gray-800 text-sm lg:text-base">{person.name}</span>
+                        <span className="text-xs text-gray-500">({person.currency})</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-base sm:text-lg lg:text-xl font-bold text-indigo-600">
+                          {person.symbol}{person.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <div className="flex gap-2">
+                {/* Action Buttons */}
+                <div className="flex flex-row lg:flex-col gap-3">
                   <button
                     onClick={copyResults}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm lg:text-base"
                   >
                     <Copy className="w-4 h-4" />
-                    Copy
+                    Copy Results
                   </button>
                   <button
                     onClick={shareResults}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm lg:text-base"
                   >
                     <Share2 className="w-4 h-4" />
-                    Share
+                    Share Results
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="text-center text-gray-500 py-8">
-                <Calculator className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p>Enter bill details and click {'"Calculate Split"'} to see results</p>
+              <div className="text-center text-gray-500 py-8 sm:py-12">
+                <Calculator className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 text-gray-300" />
+                <p className="text-sm sm:text-base px-4">Enter bill details and click "Calculate Split" to see results</p>
               </div>
             )}
           </div>
